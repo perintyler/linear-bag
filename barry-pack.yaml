@@ -1,0 +1,14 @@
+manifestVersion: 1
+name: linear
+description: Linear issue management
+
+tools:
+  entry: tools.ts
+  env:
+    - LINEAR_API_KEY
+
+mcp-servers:
+  linear-mcp:
+    command: npx
+    args: ["-y", "mcp-remote", "https://mcp.linear.app/mcp", "--header", "Authorization: Bearer ${LINEAR_API_KEY}"]
+    env: [LINEAR_API_KEY]
