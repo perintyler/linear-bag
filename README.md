@@ -1,4 +1,4 @@
-# Linear (Barry Pack)
+# Linear (Barry bag)
 
 Linear issue tracking — query, create, and manage tickets, projects, and cycles.
 
