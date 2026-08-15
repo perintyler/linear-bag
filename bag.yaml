@@ -6,8 +6,31 @@ tools:
   env:
     - LINEAR_API_KEY
 
+# Native in-process tools namespace as `linear` (see src/tools.ts). Declared
+# here so trait/namespace derivations (auto-traits, doctor, MCP boot checks)
+# know the bag provides the `linear` namespace alongside `linear-mcp`.
+tool-metadata:
+  - { toolName: ticket_get, namespace: linear, access: read }
+  - { toolName: ticket_list, namespace: linear, access: read }
+  - { toolName: ticket_search, namespace: linear, access: read }
+  - { toolName: ticket_list_comments, namespace: linear, access: read }
+  - { toolName: ticket_list_statuses, namespace: linear, access: read }
+  - { toolName: ticket_list_teams, namespace: linear, access: read }
+  - { toolName: ticket_list_labels, namespace: linear, access: read }
+  - { toolName: ticket_get_project, namespace: linear, access: read }
+  - { toolName: ticket_get_cycle, namespace: linear, access: read }
+  - { toolName: ticketing_status, namespace: linear, access: read }
+  - { toolName: ticket_update, namespace: linear, access: readwrite }
+  - { toolName: ticket_add_comment, namespace: linear, access: readwrite }
+  - { toolName: ticket_create, namespace: linear, access: readwrite }
+
 mcp-servers:
   linear-mcp:
     command: npx
     args: ["-y", "mcp-remote", "https://mcp.linear.app/mcp", "--header", "Authorization: Bearer ${LINEAR_API_KEY}"]
     env: [LINEAR_API_KEY]
+
+dependencies:
+  - name: npx
+    install: brew install node
+    reason: runs the Linear MCP server via mcp-remote
