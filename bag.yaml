@@ -1,6 +1,22 @@
 name: linear
 description: Linear issue management
 
+# Two ways to reach Linear, under one grant:
+#
+#   linear (this bag)   Barry's own ticket tools — namespace `linear`
+#   linear-official     Linear's hosted MCP — namespace `linear-mcp`
+#
+# The local half lives HERE rather than in a `linear-local` sibling because it
+# is a real package (src/, package.json, its own lockfile); moving it would buy
+# symmetry and cost a build. The parent therefore owns the local tools and
+# composes the official half.
+#
+# Deliberately NO `traits:` block. A manifest trait reusing the auto-trait's
+# name REPLACES it rather than refining it (getAllTraits — "the manifest wins"),
+# which would discard everything `bags:` absorbs.
+bags:
+  - linear-official
+
 tools:
   entry: tools.ts
   env:
@@ -24,13 +40,5 @@ tool-metadata:
   - { toolName: ticket_add_comment, namespace: linear, access: readwrite }
   - { toolName: ticket_create, namespace: linear, access: readwrite }
 
-mcp-servers:
-  linear-mcp:
-    command: npx
-    args: ["-y", "mcp-remote", "https://mcp.linear.app/mcp", "--header", "Authorization: Bearer ${LINEAR_API_KEY}"]
-    env: [LINEAR_API_KEY]
-
-dependencies:
-  - name: npx
-    install: brew install node
-    reason: runs the Linear MCP server via mcp-remote
+# The hosted Linear MCP and its npx dependency now live in `linear-official`,
+# composed above.
