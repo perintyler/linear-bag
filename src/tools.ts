@@ -1,4 +1,5 @@
-import { defineTool, type ToolContext } from "@barry-rocks/sdk/bags";
+import { type ToolContext } from "@barry-rocks/sdk/bags";
+import { defineTool } from "@barry-rocks/sdk/tools";
 import { z } from "zod";
 import { TicketingService } from "./ticketing-service.js";
 import type { Ticket, Comment } from "./types.js";
