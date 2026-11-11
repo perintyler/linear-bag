@@ -6,6 +6,7 @@ import type {
   Comment,
   Project,
   Cycle,
+  Milestone,
   WorkspaceInfo,
 } from "./types.js";
 
@@ -156,13 +157,32 @@ export class TicketingService {
     const data = await this.graphql<{ projects: { nodes: RawProject[] } }>(`
       query($name: String!) {
         projects(filter: { name: { containsIgnoreCase: $name } }, first: 1) {
-          nodes { id name description status startDate targetDate progress }
+          nodes { id name description status { name } startDate targetDate progress }
         }
       }
     `, { name });
     const project = data.projects.nodes[0];
     if (!project) throw new Error(`Project "${name}" not found`);
-    return project;
+    return { ...project, status: project.status.name };
+  }
+
+  async listMilestones(project: string): Promise<{ project: { id: string; name: string }; milestones: Milestone[] }> {
+    const p = await this.getProject(project);
+    const data = await this.graphql<{ project: { projectMilestones: { nodes: Milestone[] } } }>(`
+      query($id: String!) {
+        project(id: $id) {
+          projectMilestones(first: 100) { nodes { id name description targetDate } }
+        }
+      }
+    `, { id: p.id });
+    return { project: { id: p.id, name: p.name }, milestones: data.project.projectMilestones.nodes };
+  }
+
+  async deleteMilestone(id: string): Promise<{ id: string; deleted: boolean }> {
+    const data = await this.graphql<{ projectMilestoneDelete: { success: boolean } }>(`
+      mutation($id: String!) { projectMilestoneDelete(id: $id) { success } }
+    `, { id });
+    return { id, deleted: data.projectMilestoneDelete.success };
   }
 
   async getCycle(teamKey: string, options?: { current?: boolean; number?: number }): Promise<Cycle> {
@@ -367,7 +387,7 @@ interface RawProject {
   id: string;
   name: string;
   description: string | null;
-  status: string;
+  status: { name: string };
   startDate: string | null;
   targetDate: string | null;
   progress: number;

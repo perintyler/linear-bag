@@ -3,7 +3,7 @@ import { type ToolContext } from "@barry-rocks/sdk/tools";
 import { defineTool } from "@barry-rocks/sdk/tools";
 import { z } from "zod";
 import { TicketingService } from "./ticketing-service.js";
-import type { Ticket, Comment } from "./types.js";
+import type { Ticket, Comment, Milestone } from "./types.js";
 
 function formatTicketList(tickets: Ticket[]): string {
   if (!tickets.length) return "No tickets found.";
@@ -229,6 +229,45 @@ export const ticketGetCycle = defineTool({
   },
   handler: async ({ team, current, number }, context) => {
     return (await getService(context)).getCycle(team, { current: current ?? !number, number });
+  },
+});
+
+export const ticketListMilestones = defineTool({
+  namespace: "linear",
+  access: "read",
+  secrets: ["LINEAR_API_KEY"],
+  name: "ticket_list_milestones",
+  description: "List a project's milestones with their ids (needed for ticket_delete_milestone).",
+  schema: {
+    project: z.string().describe("Project name (partial match)"),
+  },
+  handler: async ({ project }, context) => {
+    return (await getService(context)).listMilestones(project);
+  },
+  cliFormat: (result) => {
+    const r = result as { project: { name: string }; milestones: Milestone[] };
+    if (!r.milestones.length) return `${r.project.name}: no milestones.`;
+    return `${r.project.name}:\n` + r.milestones
+      .map((m) => `${m.id}  ${m.name}${m.targetDate ? `  (target ${m.targetDate})` : ""}`)
+      .join("\n");
+  },
+});
+
+export const ticketDeleteMilestone = defineTool({
+  namespace: "linear",
+  access: "write",
+  secrets: ["LINEAR_API_KEY"],
+  name: "ticket_delete_milestone",
+  description: "Permanently delete a project milestone by id. Its tickets are kept but lose their milestone. Get the id from ticket_list_milestones.",
+  schema: {
+    id: z.string().describe("Milestone id (UUID)"),
+  },
+  handler: async ({ id }, context) => {
+    return (await getService(context)).deleteMilestone(id);
+  },
+  cliFormat: (result) => {
+    const r = result as { id: string; deleted: boolean };
+    return r.deleted ? `Deleted milestone ${r.id}` : `Milestone ${r.id} was not deleted`;
   },
 });
 

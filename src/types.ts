@@ -62,6 +62,13 @@ export interface Cycle {
   completedIssueCount: number;
 }
 
+export interface Milestone {
+  id: string;
+  name: string;
+  description: string | null;
+  targetDate: string | null;
+}
+
 export interface WorkspaceInfo {
   id: string;
   name: string;

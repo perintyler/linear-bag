@@ -16,4 +16,6 @@ Linear issue tracking — query, create, and manage tickets, projects, and cycle
 - `ticket_list_labels` — list available labels
 - `ticket_get_project` — get project details by name
 - `ticket_get_cycle` — get cycle/sprint info for a team
+- `ticket_list_milestones` — list a project's milestones with their ids
+- `ticket_delete_milestone` — permanently delete a project milestone (the hosted MCP has no delete)
 - `ticketing_status` — check Linear API connectivity and workspace info
