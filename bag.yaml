@@ -21,3 +21,8 @@ dependencies:
     reason: runs Linear's hosted MCP server via mcp-remote
     install:
       macos: brew install node
+secrets:
+  LINEAR_API_KEY:
+    in: vault
+    item: LINEAR_API_KEY
+    field: password
