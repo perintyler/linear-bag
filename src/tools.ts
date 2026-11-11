@@ -1,5 +1,4 @@
 import { Barry } from "@barry-rocks/sdk";
-import { type ToolContext } from "@barry-rocks/sdk/tools";
 import { defineTool } from "@barry-rocks/sdk/tools";
 import { z } from "zod";
 import { TicketingService } from "./ticketing-service.js";
@@ -20,8 +19,8 @@ export { TicketingService } from "./ticketing-service.js";
 let service: TicketingService | null = null;
 let serviceKey: string | null = null;
 
-async function getService(context?: ToolContext): Promise<TicketingService> {
-  const apiKey = (await Barry.bag("linear").secret("LINEAR_API_KEY"));
+async function getService(): Promise<TicketingService> {
+  const apiKey = await Barry.bag("linear").secret("LINEAR_API_KEY");
   if (!apiKey) {
     throw new Error("LINEAR_API_KEY not set — add it to the active profile's secrets");
   }
@@ -41,8 +40,8 @@ export const ticketGet = defineTool({
   schema: {
     identifier: z.string().describe("Ticket identifier (e.g. BAR-123)"),
   },
-  handler: async ({ identifier }, context) => {
-    return (await getService(context)).getTicket(identifier);
+  handler: async ({ identifier }) => {
+    return (await getService()).getTicket(identifier);
   },
   cliFormat: (result) => {
     const t = result as Ticket;
@@ -84,8 +83,8 @@ Examples:
     limit: z.number().min(1).max(100).optional().describe("Max results (default: 50)"),
     include_completed: z.boolean().optional().describe("Include completed tickets (default: false)"),
   },
-  handler: async ({ team, assignee, status, label, project, limit, include_completed }, context) => {
-    const tickets = await (await getService(context)).listTickets({
+  handler: async ({ team, assignee, status, label, project, limit, include_completed }) => {
+    const tickets = await (await getService()).listTickets({
       team,
       assignee,
       status,
@@ -113,8 +112,8 @@ export const ticketSearch = defineTool({
     query: z.string().describe("Search query"),
     limit: z.number().min(1).max(100).optional().describe("Max results (default: 20)"),
   },
-  handler: async ({ query, limit }, context) => {
-    const tickets = await (await getService(context)).searchTickets(query, limit);
+  handler: async ({ query, limit }) => {
+    const tickets = await (await getService()).searchTickets(query, limit);
     return { count: tickets.length, tickets };
   },
   cliFormat: (result) => {
@@ -133,8 +132,8 @@ export const ticketListComments = defineTool({
   schema: {
     identifier: z.string().describe("Ticket identifier (e.g. BAR-123)"),
   },
-  handler: async ({ identifier }, context) => {
-    const comments = await (await getService(context)).listComments(identifier);
+  handler: async ({ identifier }) => {
+    const comments = await (await getService()).listComments(identifier);
     return { count: comments.length, comments };
   },
   cliFormat: (result) => {
@@ -156,8 +155,8 @@ export const ticketListStatuses = defineTool({
   schema: {
     team: z.string().describe("Team key (e.g. BAR)"),
   },
-  handler: async ({ team }, context) => {
-    return (await getService(context)).listStatuses(team);
+  handler: async ({ team }) => {
+    return (await getService()).listStatuses(team);
   },
   cliFormat: (result) => {
     const statuses = result as Array<{ name: string; type: string }>;
@@ -173,8 +172,8 @@ export const ticketListTeams = defineTool({
   name: "ticket_list_teams",
   description: "List all teams in the workspace.",
   schema: {},
-  handler: async (_params, context) => {
-    return (await getService(context)).listTeams();
+  handler: async () => {
+    return (await getService()).listTeams();
   },
   cliFormat: (result) => {
     const teams = result as Array<{ key: string; name: string }>;
@@ -192,8 +191,8 @@ export const ticketListLabels = defineTool({
   schema: {
     team: z.string().optional().describe("Team key to filter labels"),
   },
-  handler: async ({ team }, context) => {
-    return (await getService(context)).listLabels(team);
+  handler: async ({ team }) => {
+    return (await getService()).listLabels(team);
   },
   cliFormat: (result) => {
     const labels = result as Array<{ name: string; color: string }>;
@@ -211,8 +210,8 @@ export const ticketGetProject = defineTool({
   schema: {
     name: z.string().describe("Project name (partial match)"),
   },
-  handler: async ({ name }, context) => {
-    return (await getService(context)).getProject(name);
+  handler: async ({ name }) => {
+    return (await getService()).getProject(name);
   },
 });
 
@@ -227,8 +226,8 @@ export const ticketGetCycle = defineTool({
     current: z.boolean().optional().describe("Get current active cycle (default)"),
     number: z.number().optional().describe("Get specific cycle by number"),
   },
-  handler: async ({ team, current, number }, context) => {
-    return (await getService(context)).getCycle(team, { current: current ?? !number, number });
+  handler: async ({ team, current, number }) => {
+    return (await getService()).getCycle(team, { current: current ?? !number, number });
   },
 });
 
@@ -241,8 +240,8 @@ export const ticketListMilestones = defineTool({
   schema: {
     project: z.string().describe("Project name (partial match)"),
   },
-  handler: async ({ project }, context) => {
-    return (await getService(context)).listMilestones(project);
+  handler: async ({ project }) => {
+    return (await getService()).listMilestones(project);
   },
   cliFormat: (result) => {
     const r = result as { project: { name: string }; milestones: Milestone[] };
@@ -262,8 +261,8 @@ export const ticketDeleteMilestone = defineTool({
   schema: {
     id: z.string().describe("Milestone id (UUID)"),
   },
-  handler: async ({ id }, context) => {
-    return (await getService(context)).deleteMilestone(id);
+  handler: async ({ id }) => {
+    return (await getService()).deleteMilestone(id);
   },
   cliFormat: (result) => {
     const r = result as { id: string; deleted: boolean };
@@ -278,13 +277,13 @@ export const ticketingStatus = defineTool({
   name: "ticketing_status",
   description: "Check ticketing API connectivity and workspace info.",
   schema: {},
-  handler: async (_params, context) => {
+  handler: async () => {
     const hasKey = !!(await Barry.bag("linear").secret("LINEAR_API_KEY"));
     if (!hasKey) {
       return { status: "disconnected", error: "LINEAR_API_KEY not set" };
     }
     try {
-      const workspace = await (await getService(context)).getWorkspace();
+      const workspace = await (await getService()).getWorkspace();
       return { status: "connected", workspace };
     } catch (e) {
       return { status: "error", error: e instanceof Error ? e.message : String(e) };
@@ -317,8 +316,8 @@ Examples:
     description: z.string().optional().describe("New description (markdown)"),
     label: z.string().optional().describe("Set label by name"),
   },
-  handler: async ({ identifier, status, assignee, priority, title, description, label }, context) => {
-    return (await getService(context)).updateTicket(identifier, { status, assignee, priority, title, description, label });
+  handler: async ({ identifier, status, assignee, priority, title, description, label }) => {
+    return (await getService()).updateTicket(identifier, { status, assignee, priority, title, description, label });
   },
   cliFormat: (result) => {
     const t = result as Ticket;
@@ -336,8 +335,8 @@ export const ticketAddComment = defineTool({
     identifier: z.string().describe("Ticket identifier (e.g. BAR-123)"),
     body: z.string().describe("Comment body (markdown)"),
   },
-  handler: async ({ identifier, body }, context) => {
-    return (await getService(context)).addComment(identifier, body);
+  handler: async ({ identifier, body }) => {
+    return (await getService()).addComment(identifier, body);
   },
 });
 
@@ -362,8 +361,8 @@ Examples:
     label: z.string().optional().describe("Label name"),
     parent: z.string().optional().describe("Parent ticket identifier for sub-issues"),
   },
-  handler: async ({ title, team, description, status, assignee, priority, label, parent }, context) => {
-    return (await getService(context)).createTicket({ title, team, description, status, assignee, priority, label, parent });
+  handler: async ({ title, team, description, status, assignee, priority, label, parent }) => {
+    return (await getService()).createTicket({ title, team, description, status, assignee, priority, label, parent });
   },
   cliFormat: (result) => {
     const t = result as Ticket;

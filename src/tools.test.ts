@@ -1,15 +1,8 @@
 import { describe, it, expect } from "vitest";
-import type { ToolDefinition } from "@barry-rocks/sdk/bags";
+import { toolDefinitions } from "@barry-rocks/sdk/tools";
 import * as tools from "./tools.js";
 
-// Object.values() over a module namespace yields a union of every export
-// (tools, but also re-exported classes), and a type predicate must be
-// assignable to its parameter type. Widening to unknown first lets us narrow
-// to just the tool definitions without naming that union.
-const allTools = (Object.values(tools) as unknown[]).filter(
-  (v): v is ToolDefinition & { handler: (args: never) => unknown } =>
-    typeof v === "object" && v !== null && "name" in v && "handler" in v,
-);
+const allTools = toolDefinitions(tools);
 
 describe("tool exports", () => {
   it("exports at least one tool", () => {

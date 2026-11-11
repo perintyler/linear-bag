@@ -146,10 +146,10 @@ export class TicketingService {
   }
 
   async listLabels(teamKey?: string): Promise<Label[]> {
-    const filter = teamKey ? `(filter: { team: { key: { eq: "${teamKey}" } } })` : "";
+    const filter = teamKey ? { team: { key: { eq: teamKey } } } : undefined;
     const data = await this.graphql<{ issueLabels: { nodes: Label[] } }>(`
-      query { issueLabels${filter} { nodes { id name color } } }
-    `);
+      query($filter: IssueLabelFilter) { issueLabels(filter: $filter, first: 250) { nodes { id name color } } }
+    `, { filter });
     return data.issueLabels.nodes;
   }
 
@@ -186,24 +186,24 @@ export class TicketingService {
   }
 
   async getCycle(teamKey: string, options?: { current?: boolean; number?: number }): Promise<Cycle> {
-    let filterStr = "";
+    let filter: Record<string, unknown> | undefined;
     if (options?.current) {
-      filterStr = ", filter: { isActive: { eq: true } }";
+      filter = { isActive: { eq: true } };
     } else if (options?.number) {
-      filterStr = `, filter: { number: { eq: ${options.number} } }`;
+      filter = { number: { eq: options.number } };
     }
 
     const data = await this.graphql<{ teams: { nodes: { cycles: { nodes: RawCycle[] } }[] } }>(`
-      query($key: String!) {
+      query($key: String!, $filter: CycleFilter) {
         teams(filter: { key: { eq: $key } }) {
           nodes {
-            cycles(first: 1${filterStr}) {
+            cycles(first: 1, filter: $filter) {
               nodes { id number name startsAt endsAt progress issueCountHistory completedIssueCountHistory }
             }
           }
         }
       }
-    `, { key: teamKey });
+    `, { key: teamKey, filter });
     const team = data.teams.nodes[0];
     if (!team) throw new Error(`Team "${teamKey}" not found`);
     const cycle = team.cycles.nodes[0];
